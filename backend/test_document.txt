@@ -1,0 +1,15 @@
+FastAPI is a modern Python web framework for building APIs.
+
+Qdrant is a vector database used for semantic search.
+
+Redis is an in-memory data store commonly used for caching.
+
+DevMind is an AI knowledge assistant designed to help developers understand technical documentation.
+
+Docker allows applications to run inside isolated containers.
+
+Redis is commonly used for caching frequently requested data.
+
+Qdrant stores vector embeddings and performs semantic similarity search.
+
+Gemini is a generative AI model that can produce natural language responses.
