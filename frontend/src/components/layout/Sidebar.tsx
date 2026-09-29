@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,13 +14,41 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { checkBackendHealth } from "@/lib/api";
 
-interface SidebarProps {
-  backendConnected?: boolean;
-}
-
-export function Sidebar({ backendConnected = false }: SidebarProps) {
+export function Sidebar() {
   const pathname = usePathname();
+  const [healthStatus, setHealthStatus] = useState<"checking" | "online" | "offline">("checking");
+  const [redisStatus, setRedisStatus] = useState(false);
+  const [qdrantStatus, setQdrantStatus] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const pollHealth = async () => {
+      try {
+        const health = await checkBackendHealth();
+        if (isMounted) {
+          setHealthStatus("online");
+          setRedisStatus(health.redis);
+          setQdrantStatus(health.qdrant);
+        }
+      } catch {
+        if (isMounted) {
+          setHealthStatus("offline");
+          setRedisStatus(false);
+          setQdrantStatus(false);
+        }
+      }
+    };
+
+    pollHealth();
+    const interval = setInterval(pollHealth, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const navItems = [
     {
@@ -121,16 +150,16 @@ export function Sidebar({ backendConnected = false }: SidebarProps) {
             <span>Architecture Roadmap</span>
           </div>
           <p className="mt-1 text-xs text-gray-400 leading-relaxed">
-            Building Phase 1: Frontend Foundation.
+            Phase 2: Connecting Frontend ↔ Backend.
           </p>
           <div className="mt-3 flex items-center justify-between text-[11px] text-gray-400">
-            <span>Milestone: 1 of 25</span>
-            <span className="font-semibold text-indigo-400">Phase 1</span>
+            <span>Milestone: 2 of 25</span>
+            <span className="font-semibold text-cyan-400">Phase 2</span>
           </div>
           <div className="mt-1.5 h-1.5 w-full rounded-full bg-gray-800 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500 transition-all duration-300"
-              style={{ width: "4%" }}
+              style={{ width: "8%" }}
             />
           </div>
         </div>
@@ -142,20 +171,25 @@ export function Sidebar({ backendConnected = false }: SidebarProps) {
         <div className="flex items-center justify-between rounded-xl bg-gray-900/80 px-3 py-2 border border-gray-800 text-xs">
           <div className="flex items-center gap-2">
             <Database className="h-3.5 w-3.5 text-gray-400" />
-            <span className="text-gray-400">FastAPI API</span>
+            <span className="text-gray-400">FastAPI (8000)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            {backendConnected ? (
+            {healthStatus === "online" && (
               <>
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="font-medium text-emerald-400 text-[11px]">Online</span>
               </>
-            ) : (
+            )}
+            {healthStatus === "offline" && (
               <>
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
-                <span className="font-medium text-amber-400 text-[11px]">
-                  Pending Phase 2
-                </span>
+                <span className="h-2 w-2 rounded-full bg-rose-500" />
+                <span className="font-medium text-rose-400 text-[11px]">Offline</span>
+              </>
+            )}
+            {healthStatus === "checking" && (
+              <>
+                <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                <span className="font-medium text-amber-400 text-[11px]">Checking...</span>
               </>
             )}
           </div>

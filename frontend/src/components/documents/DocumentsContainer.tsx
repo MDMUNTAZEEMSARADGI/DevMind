@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DocumentCard } from "./DocumentCard";
 import { UploadModal } from "./UploadModal";
 import { DocumentItem } from "@/types";
@@ -12,58 +12,65 @@ import {
   Layers,
   Sparkles,
   Info,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
-
-const INITIAL_DOCUMENTS: DocumentItem[] = [
-  {
-    id: "doc-langfuse-sample",
-    filename: "Langfuse_Observability_Guide.txt",
-    file_size: 14200,
-    status: "indexed",
-    chunks_count: 8,
-    uploaded_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-  },
-  {
-    id: "doc-test-starter",
-    filename: "test_document.txt",
-    file_size: 569,
-    status: "indexed",
-    chunks_count: 2,
-    uploaded_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-  },
-];
+import { fetchDocuments, uploadDocumentFile } from "@/lib/api";
 
 export function DocumentsContainer() {
-  const [documents, setDocuments] = useState<DocumentItem[]>(INITIAL_DOCUMENTS);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+
+  const loadDocuments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const docs = await fetchDocuments();
+      setDocuments(docs);
+    } catch (err: any) {
+      setError(err.message || "Failed to load documents from backend");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
 
   const filteredDocuments = documents.filter((doc) =>
     doc.filename.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleUploadFile = (file: File) => {
-    const newDocId = `doc-${Date.now()}`;
-    const newDoc: DocumentItem = {
-      id: newDocId,
+  const handleUploadFile = async (file: File) => {
+    const tempId = `temp-${Date.now()}`;
+    const pendingDoc: DocumentItem = {
+      id: tempId,
       filename: file.name,
       file_size: file.size,
       status: "processing",
       uploaded_at: new Date().toISOString(),
     };
 
-    setDocuments((prev) => [newDoc, ...prev]);
+    setDocuments((prev) => [pendingDoc, ...prev]);
 
-    // Demonstrate state transitions (processing -> indexed)
-    setTimeout(() => {
+    try {
+      const savedDoc = await uploadDocumentFile(file);
       setDocuments((prev) =>
-        prev.map((d) =>
-          d.id === newDocId
-            ? { ...d, status: "indexed", chunks_count: Math.ceil(file.size / 500) }
-            : d
+        prev.map((doc) => (doc.id === tempId ? savedDoc : doc))
+      );
+    } catch (err: any) {
+      setDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === tempId
+            ? { ...doc, status: "failed" }
+            : doc
         )
       );
-    }, 2000);
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -112,7 +119,17 @@ export function DocumentsContainer() {
             />
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+          <div className="flex items-center gap-3 text-xs text-gray-400">
+            <button
+              type="button"
+              onClick={loadDocuments}
+              disabled={loading}
+              className="flex items-center gap-1.5 rounded-xl border border-gray-800 bg-gray-900/80 px-2.5 py-1.5 hover:bg-gray-800 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+              title="Refresh from FastAPI backend"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-cyan-400" : ""}`} />
+              <span>Sync</span>
+            </button>
             <span>
               Total:{" "}
               <strong className="text-white">{documents.length}</strong> files

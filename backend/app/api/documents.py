@@ -62,21 +62,46 @@ async def upload_document(
         )
 
     try:
-
-        chunks = ingest_document(
-            str(file_path)
-        )
+        result = ingest_document(str(file_path))
 
     except ValueError as error:
-
         raise HTTPException(
             status_code=400,
             detail=str(error),
         )
 
+    file_size = file_path.stat().st_size
+
     return {
         "message": "Document uploaded successfully",
+        "id": file_path.stem,
         "filename": file.filename,
-        "document_id": file_path.stem,
-        "chunks": chunks,
+        "file_size": file_size,
+        "status": result["status"],
+        "chunks_count": result["chunks"],
+        "uploaded_at": file_path.stat().st_mtime,
     }
+
+
+@router.get("")
+async def list_documents(
+    user_id: str = Depends(get_current_user),
+):
+    upload_dir = Path("uploads")
+    if not upload_dir.exists():
+        return []
+
+    documents = []
+    for file_path in upload_dir.iterdir():
+        if file_path.is_file() and not file_path.name.startswith("."):
+            stat = file_path.stat()
+            documents.append({
+                "id": file_path.stem,
+                "filename": file_path.name,
+                "file_size": stat.st_size,
+                "status": "indexed",
+                "chunks_count": 0,
+                "uploaded_at": stat.st_mtime,
+            })
+
+    return documents

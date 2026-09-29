@@ -1,38 +1,17 @@
-from dotenv import load_dotenv
-from pydantic_ai import Agent
-
-load_dotenv()
-
-
-agent = Agent(
-    "google:gemini-3.6-flash",
-    system_prompt="""You are a helpful AI assistant for DevMind.
-
-Answer the user's question using the provided context when relevant.
-If the context does not contain enough information, say that clearly.
-""",
-)
-
+"""
+AI Service (Phase 2 Scaffolding):
+Currently in Phase 2 (Connect Frontend ↔ Backend).
+Real LLM integration with API credentials and model providers will be implemented in Phase 11.
+Pydantic AI agent loops will be implemented in Phase 12.
+"""
 
 async def generate_ai_response(
     message: str,
     context: list[dict] | None = None,
 ) -> str:
-
-    context_text = "\n\n".join(
-        item["text"]
-        for item in (context or [])
+    context_count = len(context or [])
+    return (
+        f"DevMind Backend (Phase 2 Scaffolding): Received query '{message}'. "
+        f"Retrieved {context_count} context chunk(s). "
+        f"Real LLM synthesis will be implemented in Phase 11."
     )
-
-    prompt = f"""
-Context from DevMind knowledge base:
-
-{context_text}
-
-User question:
-{message}
-"""
-
-    result = await agent.run(prompt)
-
-    return result.output

@@ -53,12 +53,9 @@ def extract_text(file_path: str) -> str:
     )
 
 
-def ingest_document(file_path: str):
-
+def ingest_document(file_path: str) -> dict:
     path = Path(file_path)
-
     document_id = path.stem
-
     text = extract_text(file_path)
 
     if not text.strip():
@@ -67,17 +64,28 @@ def ingest_document(file_path: str):
         )
 
     chunks = chunk_text(text)
+    indexed_count = 0
+    qdrant_error = None
 
     for index, chunk in enumerate(chunks):
+        try:
+            vector = create_embedding(chunk)
+            insert_document(
+                vector=vector,
+                text=chunk,
+                point_id=uuid4(),
+                document_id=document_id,
+                chunk_index=index,
+            )
+            indexed_count += 1
+        except Exception as error:
+            qdrant_error = str(error)
+            break
 
-        vector = create_embedding(chunk)
-
-        insert_document(
-            vector=vector,
-            text=chunk,
-            point_id=uuid4(),
-            document_id=document_id,
-            chunk_index=index,
-        )
-
-    return len(chunks)
+    return {
+        "chunks": len(chunks),
+        "indexed": indexed_count == len(chunks) and len(chunks) > 0,
+        "indexed_count": indexed_count,
+        "status": "indexed" if indexed_count == len(chunks) else "uploaded",
+        "error": qdrant_error,
+    }

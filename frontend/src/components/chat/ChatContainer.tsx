@@ -6,6 +6,7 @@ import { ChatInput } from "./ChatInput";
 import { ChatMessage } from "@/types";
 import { Sparkles, FileText, Database, Bot, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { postChatMessage } from "@/lib/api";
 
 const INITIAL_MESSAGES: ChatMessage[] = [
   {
@@ -29,7 +30,7 @@ export function ChatContainer() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       sender: "user",
@@ -37,27 +38,44 @@ export function ChatContainer() {
       timestamp: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const tempAssistantId = `assistant-${Date.now()}`;
+    const pendingAssistantMessage: ChatMessage = {
+      id: tempAssistantId,
+      sender: "assistant",
+      content: "Querying DevMind backend...",
+      timestamp: new Date().toISOString(),
+      isStreaming: true,
+    };
 
-    // Simulated responsive feedback explaining next phase
-    setTimeout(() => {
-      const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        sender: "assistant",
-        content: `I received your query: "${content}"\n\n📌 **System Status**: The UI and message flow are functioning correctly. In **Phase 2**, this action will dispatch an HTTP POST request to FastAPI (/chat), and in **Phase 10**, it will retrieve semantic chunks from Qdrant before synthesizing an answer with an LLM.`,
-        timestamp: new Date().toISOString(),
-        sources: [
-          {
-            document_id: "architecture_spec_v1",
-            filename: "DevMind_Architecture.md",
-            chunk_index: 0,
-            score: 0.94,
-            text: "DevMind Target Architecture: Next.js Frontend -> FastAPI Gateway -> Qdrant Vector Retrieval -> Pydantic AI Agent -> Streaming AG-UI Events.",
-          },
-        ],
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    }, 450);
+    setMessages((prev) => [...prev, userMessage, pendingAssistantMessage]);
+
+    try {
+      const data = await postChatMessage(content);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempAssistantId
+            ? {
+                ...msg,
+                content: data.response,
+                sources: data.sources,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+    } catch (err: any) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempAssistantId
+            ? {
+                ...msg,
+                content: `⚠️ Backend Error: ${err.message || "Failed to reach FastAPI backend"}.\n\nEnsure FastAPI is running on port 8000: \`uvicorn app.main:app --port 8000\`.`,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+    }
   };
 
   return (

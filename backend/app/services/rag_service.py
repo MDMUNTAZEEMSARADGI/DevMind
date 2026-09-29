@@ -3,13 +3,14 @@ from app.services.qdrant_service import search_documents
 
 
 def retrieve_context(question: str) -> list[dict]:
-
-    vector = create_embedding(question)
-
-    results = search_documents(
-        vector,
-        limit=3,
-    )
+    try:
+        vector = create_embedding(question)
+        results = search_documents(
+            vector,
+            limit=3,
+        )
+    except Exception:
+        return []
 
     context = []
 
