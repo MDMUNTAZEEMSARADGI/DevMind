@@ -75,7 +75,7 @@ DevMind is an end-to-end full-stack, agentic AI, and DevOps learning project bui
 
 - [x] **Phase 0: Workspace Cleanup & Git Setup**
 - [x] **Phase 1: Frontend Foundation (Sidebar, Navigation, Accessible Design)**
-- [ ] **Phase 2: Frontend ↔ Backend Connection**
+- [x] **Phase 2: Frontend ↔ Backend Connection**
 - [ ] **Phase 3: Relational Persistence with PostgreSQL**
 - [ ] **Phase 4: Authentication & User Accounts**
 - [ ] **Phase 5: Document Management & File Storage**
