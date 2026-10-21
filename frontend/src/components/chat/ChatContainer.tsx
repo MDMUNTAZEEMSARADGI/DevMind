@@ -14,7 +14,7 @@ const INITIAL_MESSAGES: ChatMessage[] = [
     sender: "assistant",
     content:
       "Welcome to **DevMind**! 🧠\n\nI am your AI Knowledge Assistant. Currently in **Phase 1 (Frontend Foundation)**, the user interface and component architecture are active. In future milestones, I will be wired to your FastAPI backend, PostgreSQL database, Qdrant vector retrieval, and Pydantic AI agent loop.\n\nYou can type a test query below to test the UI flow, or navigate to **Knowledge Documents** to explore the document ingestion interface.",
-    timestamp: new Date().toISOString(),
+    timestamp: "2026-10-07T12:00:00.000Z",
   },
 ];
 

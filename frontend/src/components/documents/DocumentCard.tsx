@@ -84,7 +84,9 @@ export function DocumentCard({ document, onDelete }: DocumentCardProps) {
               </h3>
               <p className="text-xs text-gray-400">
                 {formatBytes(document.file_size)} • Uploaded{" "}
-                {formatTimestamp(document.uploaded_at)}
+                <time dateTime={document.uploaded_at} suppressHydrationWarning>
+                  {formatTimestamp(document.uploaded_at)}
+                </time>
               </p>
             </div>
           </div>

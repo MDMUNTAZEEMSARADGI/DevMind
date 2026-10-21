@@ -25,6 +25,11 @@ export function formatBytes(bytes: number, decimals = 2): string {
  * Formats ISO timestamp into readable time string.
  */
 export function formatTimestamp(date: string | Date): string {
-  const d = new Date(date);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  try {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
 }

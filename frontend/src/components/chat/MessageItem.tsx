@@ -21,7 +21,7 @@ export function MessageItem({ message }: MessageItemProps) {
         "flex w-full gap-4 px-4 py-3 transition-colors",
         isUser ? "justify-end" : "justify-start"
       )}
-      aria-label={`${message.sender} message at ${formatTimestamp(message.timestamp)}`}
+      aria-label={`${isUser ? "User" : "Assistant"} message`}
     >
       <div
         className={cn(
@@ -48,7 +48,7 @@ export function MessageItem({ message }: MessageItemProps) {
               {isUser ? "You" : "DevMind Assistant"}
             </span>
             <span>•</span>
-            <time dateTime={message.timestamp}>
+            <time dateTime={message.timestamp} suppressHydrationWarning>
               {formatTimestamp(message.timestamp)}
             </time>
           </div>
